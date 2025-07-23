@@ -85,7 +85,7 @@ def get_pretoken_counts(input_path: str | os.PathLike, special_tokens: list[str]
     return pretoken_counts
 
 
-def get_dictionary_of_bytes(token_counts: Counter) -> Counter:
+def convert_string_to_bytes(token_counts: Counter) -> Counter:
     """
     Converts string tokens to tuples of bytes for initial BPE vocabulary.
     """
