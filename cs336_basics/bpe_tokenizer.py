@@ -1,35 +1,45 @@
 import os
 from collections import Counter
-import regex as re 
+import regex as re
 from typing import BinaryIO
 
+
 class BPETokenizer:
-    def __init__(self, vocab_size: int, special_tokens: list[str]):
+    def __init__(
+        self,
+        vocab_size: int,
+        special_tokens: list[str],
+    ) -> None:
         self.vocab_size = vocab_size
         self.special_tokens = special_tokens
         self.vocab: dict[int, bytes] = {}
         self.token_merges: list[tuple[bytes, bytes]] = []
         self.next_token_id = 256 + len(self.special_tokens)
         self._initialize_vocabulary()
-    
+
     def _initialize_vocabulary(self) -> None:
         for i in range(256):
             self.vocab[i] = bytes([i])
 
         for i, token in enumerate(self.special_tokens, start=256):
             self.vocab[i] = token.encode("utf-8")
-    
-    def train(self, input_path: str | os.PathLike):
+
+    def train(
+        self,
+        input_path: str | os.PathLike,
+    ) -> tuple[dict[int, bytes], list[tuple[bytes, bytes]]]:
         pretoken_counts = self._get_pretoken_counts(input_path, self.special_tokens)
         byte_pretoken_counts = self._convert_string_to_bytes(pretoken_counts)
         self._train_loop(byte_pretoken_counts)
         return self.vocab, self.token_merges
-    
-    def _get_pretoken_counts(self, input_path: str | os.PathLike, special_tokens: list[str]) -> Counter:
+
+    def _get_pretoken_counts(
+        self,
+        input_path: str | os.PathLike,
+        special_tokens: list[str],
+    ) -> Counter:
         with open(input_path, "rb") as f:
-            boundaries = self._find_chunk_boundaries(
-                f, 100, special_tokens[0].encode("utf-8")
-            )
+            boundaries = self._find_chunk_boundaries(f, 100, special_tokens[0].encode("utf-8"))
 
             pretoken_counts: Counter = Counter()
             # Escape special tokens for regex
@@ -53,19 +63,18 @@ class BPETokenizer:
                         pretoken_counts[token] += 1
 
         return pretoken_counts
-    
-    def _find_chunk_boundaries(self, 
-    file: BinaryIO, 
-    desired_num_chunks: int, 
-    split_special_token: bytes
-) -> list[int]:
+
+    def _find_chunk_boundaries(
+        self,
+        file: BinaryIO,
+        desired_num_chunks: int,
+        split_special_token: bytes,
+    ) -> list[int]:
         """
         Chunk the file into parts that can be counted independently.
         May return fewer chunks if the boundaries end up overlapping.
         """
-        assert isinstance(split_special_token, bytes), (
-            "Must represent special token as a bytestring"
-        )
+        assert isinstance(split_special_token, bytes), "Must represent special token as a bytestring"
 
         # Get total file size in bytes
         file.seek(0, os.SEEK_END)
@@ -101,17 +110,20 @@ class BPETokenizer:
 
         # Make sure all boundaries are unique, but might be fewer than desired_num_chunks
         return sorted(set(chunk_boundaries))
-    
-    def _convert_string_to_bytes(self, token_counts: Counter) -> Counter:
+
+    def _convert_string_to_bytes(
+        self,
+        token_counts: Counter,
+    ) -> Counter:
         """
         Converts string tokens to tuples of bytes for initial BPE vocabulary.
         """
-        return Counter({
-            tuple(token.encode("utf-8")): count
-            for token, count in token_counts.items()
-        })
+        return Counter({tuple(token.encode("utf-8")): count for token, count in token_counts.items()})
 
-    def _train_loop(self, byte_pretoken_counts: Counter) -> None:
+    def _train_loop(
+        self,
+        byte_pretoken_counts: Counter,
+    ) -> None:
         while self.next_token_id < self.vocab_size:
             pair_counts = self._get_pair_counts(byte_pretoken_counts)
             most_frequent_pair = self._get_most_frequent_pair(pair_counts)
@@ -119,27 +131,37 @@ class BPETokenizer:
             byte_pretoken_counts = self._update_byte_pretoken_counts(byte_pretoken_counts, most_frequent_pair)
             self.next_token_id += 1
 
-    def _get_pair_counts(self, byte_pretoken_counts: Counter) -> Counter:
+    def _get_pair_counts(
+        self,
+        byte_pretoken_counts: Counter,
+    ) -> Counter:
         pair_counts: Counter = Counter()
         for seq, freq in byte_pretoken_counts.items():
             for i in range(len(seq) - 1):
                 pair_counts[(seq[i], seq[i + 1])] += freq
         return pair_counts
-    
-    def _get_most_frequent_pair(self, pair_counts: Counter) -> tuple[int, int]:
-        most_frequent_pair, _ = max(
-            pair_counts.items(),
-            key=lambda x: (x[1],) + tuple(self.vocab[c] for c in x[0])
-        )
+
+    def _get_most_frequent_pair(
+        self,
+        pair_counts: Counter,
+    ) -> tuple[int, int]:
+        most_frequent_pair, _ = max(pair_counts.items(), key=lambda x: (x[1],) + tuple(self.vocab[c] for c in x[0]))
         return most_frequent_pair
-    
-    def _create_new_token_and_update_vocab_and_merges(self, most_frequent_pair: tuple[int, int]) -> None:
+
+    def _create_new_token_and_update_vocab_and_merges(
+        self,
+        most_frequent_pair: tuple[int, int],
+    ) -> None:
         id1, id2 = most_frequent_pair
         new_token_bytes = self.vocab[id1] + self.vocab[id2]
         self.vocab[self.next_token_id] = new_token_bytes
         self.token_merges.append((self.vocab[id1], self.vocab[id2]))
-    
-    def _update_byte_pretoken_counts(self, byte_pretoken_counts: Counter, most_frequent_pair: tuple[int, int]) -> Counter:
+
+    def _update_byte_pretoken_counts(
+        self,
+        byte_pretoken_counts: Counter,
+        most_frequent_pair: tuple[int, int],
+    ) -> Counter:
         new_counts: Counter = Counter()
         id1, id2 = most_frequent_pair
         for seq, freq in byte_pretoken_counts.items():
@@ -155,7 +177,6 @@ class BPETokenizer:
             new_counts[tuple(merged_seq)] = freq
         byte_pretoken_counts = new_counts
         return byte_pretoken_counts
-
 
 
 if __name__ == "__main__":
