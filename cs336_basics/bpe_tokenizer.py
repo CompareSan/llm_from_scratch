@@ -68,7 +68,7 @@ class BPETokenizer():
                     merged_seq.append(seq[i])
                     i += 1
             new_counts[tuple(merged_seq)] = freq
-            byte_pretoken_counts = new_counts
+        byte_pretoken_counts = new_counts
         return byte_pretoken_counts
 
 
