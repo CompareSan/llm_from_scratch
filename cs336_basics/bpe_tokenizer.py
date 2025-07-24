@@ -4,6 +4,7 @@ import regex as re
 from typing import BinaryIO
 
 
+
 class BPETokenizer:
     def __init__(
         self,
@@ -30,7 +31,8 @@ class BPETokenizer:
     ) -> tuple[dict[int, bytes], list[tuple[bytes, bytes]]]:
         pretoken_counts = self._get_pretoken_counts(input_path, self.special_tokens)
         byte_pretoken_counts = self._convert_string_to_bytes(pretoken_counts)
-        self._train_loop(byte_pretoken_counts)
+        pair_counts = self._get_pair_counts(byte_pretoken_counts)
+        self._train_loop(byte_pretoken_counts, pair_counts)
         return self.vocab, self.token_merges
 
     def _get_pretoken_counts(
@@ -52,6 +54,8 @@ class BPETokenizer:
             for start, end in zip(boundaries[:-1], boundaries[1:]):
                 f.seek(start)
                 chunk = f.read(end - start).decode("utf-8", errors="ignore")
+
+
 
                 # Keep special tokens in the split result
                 # I don't want to keep them
@@ -120,14 +124,11 @@ class BPETokenizer:
         """
         return Counter({tuple(token.encode("utf-8")): count for token, count in token_counts.items()})
 
-    def _train_loop(
-        self,
-        byte_pretoken_counts: Counter,
-    ) -> None:
+    def _train_loop(self, byte_pretoken_counts: Counter, pair_counts: Counter) -> None:
         while self.next_token_id < self.vocab_size:
-            pair_counts = self._get_pair_counts(byte_pretoken_counts)
             most_frequent_pair = self._get_most_frequent_pair(pair_counts)
             self._create_new_token_and_update_vocab_and_merges(most_frequent_pair)
+            pair_counts = self._update_pair_counts(pair_counts, most_frequent_pair, byte_pretoken_counts)
             byte_pretoken_counts = self._update_byte_pretoken_counts(byte_pretoken_counts, most_frequent_pair)
             self.next_token_id += 1
 
@@ -175,14 +176,47 @@ class BPETokenizer:
                     merged_seq.append(seq[i])
                     i += 1
             new_counts[tuple(merged_seq)] = freq
-        byte_pretoken_counts = new_counts
-        return byte_pretoken_counts
+        return new_counts
+
+    def _update_pair_counts(
+        self,
+        pair_counts: Counter,
+        most_frequent_pair: tuple[int, int],
+        byte_pretoken_counts: Counter,
+    ):
+        pair_counts.pop(most_frequent_pair)
+        for key, count in list(byte_pretoken_counts.items()):
+            key_len = len(key)
+            for i in range(key_len - 2 + 1):
+                if key[i : i + 2] == most_frequent_pair:
+    
+                    before = key[i - 1] if i > 0 else None
+                    after = key[i + 2] if i + 2 < key_len else None
+
+                    if before is not None:
+                        pair_counts[(before, most_frequent_pair[0])] -= count
+                    if after is not None:
+                        pair_counts[(most_frequent_pair[-1], after)] -= count
+
+                    if before is not None:
+                        pair_counts[(before, self.next_token_id)] += count
+                    if after is not None:
+                        pair_counts[(self.next_token_id, after)] += count
+        return pair_counts
 
 
 if __name__ == "__main__":
-    vocab_size = 270
+    import json
+    vocab_size = 500
     special_tokens = ["<|endoftext|>"]
     tokenizer = BPETokenizer(vocab_size, special_tokens)
     vocab, token_merges = tokenizer.train(input_path="../data/corpus.en")
+    with open("vocab.json", "w") as vocab_file:
+        json.dump({k: v.hex() for k, v in vocab.items()}, vocab_file, indent=2)
+    with open("merges.txt", "w") as merges_file:
+        for merge in token_merges:
+            merges_file.write(f"{merge[0].hex()} {merge[1].hex()}\n")
+
+    print("Vocabulary and merges saved.")
     print(vocab)
     print(token_merges)
