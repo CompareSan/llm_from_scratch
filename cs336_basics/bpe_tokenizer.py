@@ -173,20 +173,23 @@ class BPETokenizer:
         byte_pretoken_counts: Counter,
         most_frequent_pair: tuple[int, int],
     ) -> Counter:
-        new_counts: Counter = Counter()
         id1, id2 = most_frequent_pair
-        for seq, freq in byte_pretoken_counts.items():
+        for seq, freq in list(byte_pretoken_counts.items()):
             merged_seq = []
             i = 0
+            changed = False
             while i < len(seq):
                 if i < len(seq) - 1 and seq[i] == id1 and seq[i + 1] == id2:
                     merged_seq.append(self.next_token_id)
                     i += 2
+                    changed = True
                 else:
                     merged_seq.append(seq[i])
                     i += 1
-            new_counts[tuple(merged_seq)] = freq
-        return new_counts
+            if changed:
+                byte_pretoken_counts.pop(seq)
+                byte_pretoken_counts[tuple(merged_seq)] = freq
+        return byte_pretoken_counts
 
     def _update_pair_counts(
         self,
