@@ -2,6 +2,7 @@ import os
 from collections import Counter
 import regex as re
 from typing import BinaryIO
+from multiprocessing import Pool, cpu_count
 
 
 
@@ -51,22 +52,31 @@ class BPETokenizer:
             # GPT-2-like pre-tokenization pattern
             PAT = r"""'(?:[sdmt]|ll|ve|re)| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+"""
 
-            for start, end in zip(boundaries[:-1], boundaries[1:]):
-                f.seek(start)
-                chunk = f.read(end - start).decode("utf-8", errors="ignore")
+            tasks = [
+                (input_path, start, end, split_pattern, PAT)
+                for start, end in zip(boundaries[:-1], boundaries[1:])
+            ]
+            with Pool(cpu_count()) as pool:
+                results = pool.map(self._process_chunk, tasks)
+        
+            for counter in results:
+                pretoken_counts.update(counter)
 
+            return pretoken_counts
 
-
-                # Keep special tokens in the split result
-                # I don't want to keep them
-                parts = re.split(split_pattern, chunk)
-
-                for part in parts:
-                    for match in re.finditer(PAT, part):
-                        token = match.group(0)
-                        pretoken_counts[token] += 1
-
-        return pretoken_counts
+    def _process_chunk(self, args):
+        """Process a single chunk and return its token counts."""
+        file_path, start, end, split_pattern, PAT = args
+        counter = Counter()
+        with open(file_path, "rb") as f:
+            f.seek(start)
+            chunk = f.read(end - start).decode("utf-8", errors="ignore")
+            parts = re.split(split_pattern, chunk)
+            for part in parts:
+                for match in re.finditer(PAT, part):
+                    token = match.group(0)
+                    counter[token] += 1
+        return counter
 
     def _find_chunk_boundaries(
         self,
@@ -210,7 +220,7 @@ if __name__ == "__main__":
     vocab_size = 500
     special_tokens = ["<|endoftext|>"]
     tokenizer = BPETokenizer(vocab_size, special_tokens)
-    vocab, token_merges = tokenizer.train(input_path="../data/corpus.en")
+    vocab, token_merges = tokenizer.train(input_path="../data/TinyStoriesV2-GPT4-valid.txt")
     with open("vocab.json", "w") as vocab_file:
         json.dump({k: v.hex() for k, v in vocab.items()}, vocab_file, indent=2)
     with open("merges.txt", "w") as merges_file:
