@@ -13,7 +13,7 @@ class BPETokenizer:
         self.special_tokens = special_tokens
         self.vocab: dict[int, bytes] = {}
         self.token_merges: list[tuple[bytes, bytes]] = []
-        self.next_token_id = 256 + len(special_tokens)
+        self._next_token_id = 256 + len(special_tokens)
         self._initialize_vocabulary()
         self.pretokenizer = Pretokenizer(special_tokens)
 
@@ -34,12 +34,12 @@ class BPETokenizer:
         return self.vocab, self.token_merges
 
     def _train_loop(self, byte_pretoken_counts: Counter, pair_byte_counts: Counter) -> None:
-        while self.next_token_id < self.vocab_size:
+        while self._next_token_id < self.vocab_size:
             most_frequent_pair = self._get_most_frequent_pair(pair_byte_counts)
             self._create_new_token_and_update_vocab_and_merges(most_frequent_pair)
             pair_byte_counts = self._update_pair_byte_counts(pair_byte_counts, most_frequent_pair, byte_pretoken_counts)
             byte_pretoken_counts = self._update_byte_pretoken_counts(byte_pretoken_counts, most_frequent_pair)
-            self.next_token_id += 1
+            self._next_token_id += 1
 
     def _get_pair_byte_counts(
         self,
@@ -64,7 +64,7 @@ class BPETokenizer:
     ) -> None:
         id1, id2 = most_frequent_pair
         new_token_bytes = self.vocab[id1] + self.vocab[id2]
-        self.vocab[self.next_token_id] = new_token_bytes
+        self.vocab[self._next_token_id] = new_token_bytes
         self.token_merges.append((self.vocab[id1], self.vocab[id2]))
 
     def _update_byte_pretoken_counts(
@@ -79,7 +79,7 @@ class BPETokenizer:
             changed = False
             while i < len(seq):
                 if i < len(seq) - 1 and seq[i] == id1 and seq[i + 1] == id2:
-                    merged_seq.append(self.next_token_id)
+                    merged_seq.append(self._next_token_id)
                     i += 2
                     changed = True
                 else:
@@ -111,9 +111,9 @@ class BPETokenizer:
                         pair_byte_counts[(most_frequent_pair[-1], after)] -= count
 
                     if before is not None:
-                        pair_byte_counts[(before, self.next_token_id)] += count
+                        pair_byte_counts[(before, self._next_token_id)] += count
                     if after is not None:
-                        pair_byte_counts[(self.next_token_id, after)] += count
+                        pair_byte_counts[(self._next_token_id, after)] += count
         return pair_byte_counts
 
 
