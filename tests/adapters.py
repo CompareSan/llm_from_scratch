@@ -13,7 +13,7 @@ from cs336_basics.layers.linear import Linear
 from cs336_basics.layers.embedding import Embedding
 from cs336_basics.layers.rms_norm import RMSNorm
 from cs336_basics.layers.swiglu_ff import SwiGLU
-from cs336_basics.layers.multi_head_self_attention import MultiHeadSelfAttention
+from cs336_basics.layers.multi_head_self_attention import MultiHeadSelfAttention, MultiHeadSelfAttentionWithRoPE
 from cs336_basics.layers.rope import RoPE
 from cs336_basics.utils.softmax import softmax
 from cs336_basics.utils.scaled_dot_product_attention import scaled_dot_product_attention
@@ -200,7 +200,13 @@ def run_multihead_self_attention_with_rope(
         Float[Tensor, " ... sequence_length d_out"]: Tensor with the output of running your optimized, batched multi-headed attention
         implementation with the given QKV projection weights and input features.
     """
-    raise NotImplementedError
+    mha_layer = MultiHeadSelfAttentionWithRoPE(d_model, num_heads, theta, max_seq_len)
+    mha_layer.W_q.load_state_dict({"weight": q_proj_weight})
+    mha_layer.W_k.load_state_dict({"weight": k_proj_weight})
+    mha_layer.W_v.load_state_dict({"weight": v_proj_weight})
+    mha_layer.W_o.load_state_dict({"weight": o_proj_weight})
+
+    return mha_layer(in_features, token_positions)
 
 
 def run_rope(
