@@ -8,7 +8,7 @@ from jaxtyping import Float, Int
 import numpy.typing as npt
 import torch
 from torch import Tensor
-from cs336_basics.bpe_tokenizer import BPETokenizer
+from cs336_basics.bpe_tokenizer import BPETrainer
 from cs336_basics.layers.linear import Linear
 from cs336_basics.layers.embedding import Embedding
 from cs336_basics.layers.rms_norm import RMSNorm
@@ -674,7 +674,7 @@ def run_train_bpe(
                 representing that <token1> was merged with <token2>.
                 Merges are ordered by order of creation.
     """
-    tokenizer = BPETokenizer(vocab_size, special_tokens)
-    vocab, merges = tokenizer.train(input_path=input_path)
+    bpe_trainer = BPETrainer(vocab_size, special_tokens)
+    vocab, merges = bpe_trainer.train(input_path=input_path)
     return vocab, merges
     

@@ -3,7 +3,7 @@ from collections import Counter
 from cs336_basics.pretokenizer import Pretokenizer
 
 
-class BPETokenizer:
+class BPETrainer:
     def __init__(
         self,
         vocab_size: int,
@@ -121,8 +121,8 @@ if __name__ == "__main__":
     import json
     vocab_size = 500
     special_tokens = ["<|endoftext|>"]
-    tokenizer = BPETokenizer(vocab_size, special_tokens)
-    vocab, token_merges = tokenizer.train(input_path="../data/TinyStoriesV2-GPT4-valid.txt")
+    bpe_trainer = BPETrainer(vocab_size, special_tokens)
+    vocab, token_merges = bpe_trainer.train(input_path="../data/TinyStoriesV2-GPT4-train.txt")
     with open("vocab.json", "w") as vocab_file:
         json.dump({k: v.hex() for k, v in vocab.items()}, vocab_file, indent=2)
     with open("merges.txt", "w") as merges_file:
