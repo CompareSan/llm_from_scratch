@@ -9,6 +9,7 @@ import numpy.typing as npt
 import torch
 from torch import Tensor
 from cs336_basics.tokenizers.bpe_trainer import BPETrainer
+from cs336_basics.tokenizers.bpe_tokenizer import BPETokenizer
 from cs336_basics.layers.linear import Linear
 from cs336_basics.layers.embedding import Embedding
 from cs336_basics.layers.rms_norm import RMSNorm
@@ -644,7 +645,7 @@ def get_tokenizer(
     Returns:
         A BPE tokenizer that uses the provided vocab, merges, and special tokens.
     """
-    raise NotImplementedError
+    return BPETokenizer(vocab, merges, special_tokens)
 
 
 def run_train_bpe(

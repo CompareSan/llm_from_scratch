@@ -7,6 +7,7 @@ from multiprocessing import Pool, cpu_count
 class Pretokenizer:
     def __init__(self, special_tokens: list[str]) -> None:
         self.special_tokens = special_tokens
+        self.pat = r"""'(?:[sdmt]|ll|ve|re)| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+"""
 
     def _get_pretoken_counts(
         self,
@@ -20,11 +21,8 @@ class Pretokenizer:
             escaped_tokens = list(map(re.escape, self.special_tokens))
             split_pattern = "|".join(escaped_tokens)
 
-            # GPT-2-like pre-tokenization pattern
-            PAT = r"""'(?:[sdmt]|ll|ve|re)| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+"""
-
             tasks = [
-                (input_path, start, end, split_pattern, PAT)
+                (input_path, start, end, split_pattern, self.pat)
                 for start, end in zip(boundaries[:-1], boundaries[1:])
             ]
             with Pool(cpu_count()) as pool:
@@ -104,3 +102,26 @@ class Pretokenizer:
         Converts string tokens to tuples of bytes for initial BPE vocabulary.
         """
         return Counter({tuple(token.encode("utf-8")): count for token, count in token_counts.items()})
+    
+    def _pretoken_text(self, text: str) -> list[str]:
+        """
+        Pre-tokenizes the input text using the defined pre-tokenization pattern.
+        """
+        if not self.special_tokens:
+            return re.findall(self.pat, text)
+
+        # Sort special tokens by length (descending) to prioritize longer matches
+        sorted_special_tokens = sorted(self.special_tokens, key=len, reverse=True)
+        special_pattern = "|".join(map(re.escape, sorted_special_tokens))
+
+        # Split the text by special tokens, keeping the delimiters
+        parts = re.split(f"({special_pattern})", text)
+
+        pre_tokens = []
+        for part in parts:
+            if part in self.special_tokens:
+                pre_tokens.append(part)
+            else:
+                pre_tokens.extend(re.findall(self.pat, part))
+        
+        return pre_tokens

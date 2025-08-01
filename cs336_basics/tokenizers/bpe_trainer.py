@@ -123,7 +123,7 @@ class _BPETrainingEngine:
 
 if __name__ == "__main__":
     import json
-    vocab_size = 500
+    vocab_size = 10000
     special_tokens = ["<|endoftext|>"]
     bpe_trainer = BPETrainer(vocab_size, special_tokens)
     vocab, token_merges = bpe_trainer.train(input_path="../data/TinyStoriesV2-GPT4-train.txt")
