@@ -57,8 +57,12 @@ class BPETokenizer:
 
 
 if __name__ == "__main__":
-    BPETokenizer = BPETokenizer.from_files("vocab.json", "merges.txt", special_token=["<|endoftext|>"])
-    encoded_text = BPETokenizer.encode("Name is Filippo <|endoftext|>, <|endoftext|>  I am a software engineer.")
-    print("Encoded text:", encoded_text)
-    decoded_text = BPETokenizer.decode(encoded_text)
-    print("Decoded text:", decoded_text)
+    import numpy as np
+    import tqdm
+    tokenizer = BPETokenizer.from_files("vocab.json", "merges.txt", special_token=["<|endoftext|>"])
+    valid_ids = []
+    with open("../data/TinyStoriesV2-GPT4-valid.txt") as f:
+        for _id in tqdm.tqdm(tokenizer.encode_iterable(f), desc="Encoding"):
+            valid_ids.append(_id)
+    valid_ids_np = np.array(valid_ids, dtype=np.uint16)
+    np.save("valid_ids.npy", valid_ids_np)
