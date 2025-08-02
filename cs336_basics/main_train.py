@@ -16,7 +16,7 @@ def main():
     d_ff = int(8/3 * d_model)
     theta = 10000.0
     batch_size = 4
-    n_epochs = 1
+    n_steps = 10000
     lr = 1e-4
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -29,7 +29,7 @@ def main():
 
     dataset = np.load('./data/valid_ids.npy')  # Load your dataset here
 
-    train_losses = trainer.train(dataset, batch_size, context_len, n_epochs)
+    train_losses = trainer.train(dataset, batch_size, context_len, n_steps)
 
     print("Training complete. Final training loss:", train_losses[-1])
 

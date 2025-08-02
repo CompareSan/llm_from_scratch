@@ -14,27 +14,32 @@ class Trainer:
         self.device = device
         self.iteration = iteration
     
-    def train(self, dataset: np.ndarray, batch_size: int, context_len: int, num_epochs: int) -> list[float]:
-        train_losses = []
+    def train(self, dataset: np.ndarray, batch_size: int, context_len: int, n_steps: int) -> list[float]:
+        all_losses = []
         self.model.train()
-        for _ in range(num_epochs):
-            batch_generator = get_shuffled_batches(dataset, batch_size, context_len, self.device)
-            epoch_loss = 0.0
-            pbar = tqdm.tqdm(batch_generator, desc=f"Epoch {_ + 1}/{num_epochs}")
-            for inputs, targets in pbar:
-                loss = self._train_step(inputs, targets)
-                epoch_loss += loss
-                self.iteration += 1
-                pbar.set_postfix(loss=loss)
+        
+        pbar = tqdm.tqdm(range(n_steps), desc="Training", unit="step")
+        
+        batch_generator = get_shuffled_batches(dataset, batch_size, context_len, self.device)
 
-                if self.iteration % 1000 == 0:
-                    self.save(f'./checkpoints/checkpoint_{self.iteration}.pt')
+        for _ in pbar:
+            try:
+                inputs, targets = next(batch_generator)
+            except StopIteration:
+                # Reset the generator if it's exhausted
+                batch_generator = get_shuffled_batches(dataset, batch_size, context_len, self.device)
+                inputs, targets = next(batch_generator)
 
-            epoch_loss /= len(dataset) // batch_size
-            train_losses.append(epoch_loss)
+            loss = self._train_step(inputs, targets)
+            all_losses.append(loss)
+            self.iteration += 1
+            pbar.set_postfix(loss=f"{loss:.4f}")
+
+            if self.iteration > 0 and self.iteration % 1000 == 0:
+                self.save(f'./checkpoints/checkpoint_{self.iteration}.pt')
 
         self.save('./checkpoints/final_checkpoint.pt')
-        return train_losses
+        return all_losses
         
 
     def _train_step(self, inputs: torch.Tensor, targets: torch.Tensor):
