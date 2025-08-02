@@ -9,13 +9,13 @@ import numpy as np
 
 def main():   
     vocab_size = 10000
-    context_len = 512
+    context_len = 128
     num_layers = 6
     d_model = 768
     num_heads = 12
     d_ff = int(8/3 * d_model)
-    theta = 0.1
-    batch_size = 32
+    theta = 10000.0
+    batch_size = 4
     n_epochs = 10
     lr = 1e-4
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -24,7 +24,7 @@ def main():
     optimizer = AdamW(model.parameters(), lr=lr)
     trainer = Trainer(model, optimizer, device=device)
 
-    
+
     dataset = np.load('./data/valid_ids.npy')  # Load your dataset here
 
     train_losses = trainer.train(dataset, batch_size, context_len, n_epochs)
