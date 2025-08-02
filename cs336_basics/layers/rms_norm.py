@@ -9,7 +9,7 @@ class RMSNorm(nn.Module):
 
         self.eps = eps
         self.d_model = d_model
-        self.gain = nn.Parameter(torch.empty(d_model, device=device, dtype=dtype))
+        self.gain = nn.Parameter(torch.ones(d_model, device=device, dtype=dtype))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor: #x (batch_size, seq_len, d_model)
         in_dtype = x.dtype

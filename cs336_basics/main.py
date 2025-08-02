@@ -16,7 +16,7 @@ def main():
     d_ff = int(8/3 * d_model)
     theta = 10000.0
     batch_size = 4
-    n_epochs = 10
+    n_epochs = 1
     lr = 1e-4
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 

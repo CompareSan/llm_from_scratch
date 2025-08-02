@@ -4,6 +4,7 @@ import numpy as np
 from cs336_basics.utils.data_loading import get_shuffled_batches
 from cs336_basics.utils.save_model import save_checkpoint
 from cs336_basics.losses.cross_entropy_loss import cross_entropy_loss
+import tqdm
 
 class Trainer:
     def __init__(self, model: nn.Module, optimizer: torch.optim.Optimizer, device: str = 'cpu'):
@@ -18,19 +19,20 @@ class Trainer:
         for _ in range(num_epochs):
             batch_generator = get_shuffled_batches(dataset, batch_size, context_len, self.device)
             epoch_loss = 0.0
-            
-            for inputs, targets in batch_generator:
+            pbar = tqdm.tqdm(batch_generator, desc=f"Epoch {_ + 1}/{num_epochs}")
+            for inputs, targets in pbar:
                 loss = self._train_step(inputs, targets)
                 epoch_loss += loss
                 iteration += 1
+                pbar.set_postfix(loss=loss)
 
                 if iteration % 100 == 0:
-                    self.save(f'checkpoint_{iteration}.pt', iteration)
-            
+                    self.save(f'./checkpoints/checkpoint_{iteration}.pt', iteration)
+
             epoch_loss /= len(dataset) // batch_size
             train_losses.append(epoch_loss)
 
-        self.save('final_checkpoint.pt', iteration)
+        self.save('./checkpoints/final_checkpoint.pt', iteration)
         return train_losses
         
 
