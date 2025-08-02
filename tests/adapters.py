@@ -18,12 +18,12 @@ from cs336_basics.layers.multi_head_self_attention import MultiHeadSelfAttention
 from cs336_basics.layers.transformer_block import TransformerBlock
 from cs336_basics.layers.transformer_llm import Transformer
 from cs336_basics.layers.rope import RoPE
-from cs336_basics.utils.softmax import softmax
-from cs336_basics.utils.cross_entropy_loss import cross_entropy_loss
-from cs336_basics.utils.scaled_dot_product_attention import scaled_dot_product_attention
+from cs336_basics.layers.softmax import softmax
+from cs336_basics.losses.cross_entropy_loss import cross_entropy_loss
+from cs336_basics.layers.scaled_dot_product_attention import scaled_dot_product_attention
 from cs336_basics.utils.data_loading import get_batch
 from cs336_basics.utils.save_model import save_checkpoint, load_checkpoint
-from cs336_basics.utils.silu import silu
+from cs336_basics.layers.silu import silu
 from cs336_basics.optimizers.adam import AdamW
 from cs336_basics.optimizers.lr_scheduler import cosine_annealing_scheduler
 from cs336_basics.optimizers.gradient_clipping import gradient_clipping

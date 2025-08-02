@@ -1,5 +1,5 @@
 import torch 
-from cs336_basics.utils.softmax  import softmax
+from cs336_basics.layers.softmax  import softmax
 
 def scaled_dot_product_attention(Q: torch.Tensor, K: torch.Tensor, V: torch.Tensor, mask: torch.Tensor | None = None) -> torch.Tensor:
     # Q (batch_size, seq_len, d_k), K (batch_size, seq_len, d_k), V (batch_size, seq_len, d_v)

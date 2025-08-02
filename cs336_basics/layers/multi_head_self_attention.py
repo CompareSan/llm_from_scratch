@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from cs336_basics.layers.linear import Linear
 from cs336_basics.layers.rope import RoPE
-from cs336_basics.utils.scaled_dot_product_attention import scaled_dot_product_attention
+from cs336_basics.layers.scaled_dot_product_attention import scaled_dot_product_attention
 
 
 
