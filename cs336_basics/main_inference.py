@@ -7,7 +7,7 @@ import torch
 
 def main():
     vocab_size = 10_000
-    context_len = 128
+    context_len = 256
     num_layers = 4
     d_model = 512
     num_heads = 16
@@ -18,7 +18,7 @@ def main():
     model = Transformer(vocab_size, context_len, num_layers, d_model, num_heads, d_ff, theta)
     model.to(device)
     model = torch.compile(model)
-    checkpoint = torch.load('./checkpoints/checkpoint_1000.pt', map_location=device)
+    checkpoint = torch.load('./checkpoints/checkpoint_7000.pt', map_location=device)
     model.load_state_dict(checkpoint['model_state_dict'])
     model.eval()
 

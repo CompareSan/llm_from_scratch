@@ -11,14 +11,14 @@ import os
 
 def main():   
     vocab_size = 10_000
-    context_len = 128
+    context_len = 256
     num_layers = 4
     d_model = 512
     num_heads = 16
     d_ff = int(8/3 * d_model)
     theta = 10000.0
-    batch_size = 4
-    n_steps = 500_000  # number of token processed n_steps * batch_size * context_len (approx 250M), total FLOPS approx 250M * n_parameters (22M) * 2 = 1.12 e16 FLOPS
+    batch_size = 16
+    n_steps = 5000  # number of token processed n_steps * batch_size * context_len (approx 250M), total FLOPS approx 250M * n_parameters (22M) * 2 = 1.12 e16 FLOPS
     lr = 1e-4
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     # if checkpoint folder is not empty, load last checkpoint:
