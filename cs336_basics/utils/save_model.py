@@ -10,8 +10,9 @@ def save_checkpoint(model: torch.nn.Module, optimizer: torch.optim.Optimizer, it
     }
     torch.save(checkpoint, out)
 
-def load_checkpoint(src: str | os.PathLike | typing.BinaryIO | typing.IO[bytes], model: torch.nn.Module, optimizer: torch.optim.Optimizer) -> int:
-    checkpoint = torch.load(src, map_location='cpu')  # Load on CPU for safety
+def load_checkpoint(src: str | os.PathLike | typing.BinaryIO | typing.IO[bytes], model: torch.nn.Module, optimizer: torch.optim.Optimizer, device: torch.device = 'cpu') -> int:
+    checkpoint = torch.load(src, map_location=device)  # Load on CPU for safety
     model.load_state_dict(checkpoint['model_state_dict'])
     optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
     return checkpoint['iteration']
+    

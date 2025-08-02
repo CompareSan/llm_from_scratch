@@ -8,9 +8,9 @@ import torch
 def main():
     vocab_size = 10000
     context_len = 128
-    num_layers = 6
-    d_model = 768
-    num_heads = 12
+    num_layers = 4
+    d_model = 512
+    num_heads = 16
     d_ff = int(8/3 * d_model)
     theta = 10000.0
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
