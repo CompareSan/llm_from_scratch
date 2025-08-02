@@ -15,7 +15,7 @@ class TransformerBlock(nn.Module):
         self.rmsnorm2 = RMSNorm(d_model)
 
     def forward(self, x: torch.Tensor):
-        token_pos = torch.arange(x.shape[1])
+        token_pos = torch.arange(x.shape[1], device=x.device, dtype=torch.long)
         y = x + self.mha(self.rmsnorm1(x), token_pos)
         return y + self.swiglu(self.rmsnorm2(y))
 

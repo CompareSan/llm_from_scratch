@@ -12,10 +12,10 @@ class RoPE(nn.Module):
 
         inv_freq = 1.0 / (
             theta
-            **(torch.arange(0, d_k, 2)[: (d_k // 2)].float() / d_k)
+            **(torch.arange(0, d_k, 2, device=device)[: (d_k // 2)].float() / d_k)
         )
-        
-        i = torch.arange(max_seq_len, dtype=torch.float)
+
+        i = torch.arange(max_seq_len, device=device, dtype=torch.float)
         i_div_inv_freq_matrix = i.unsqueeze(-1)@inv_freq.unsqueeze(0)
         cache = torch.stack([i_div_inv_freq_matrix.cos(), i_div_inv_freq_matrix.sin()], dim=-1)
         self.register_buffer("cache", cache, persistent=False)

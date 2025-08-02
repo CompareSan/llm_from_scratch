@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 from cs336_basics.utils.data_loading import get_shuffled_batches
-from cs336_basics.utils.save_model import save_checkpoint, load_checkpoint
+from cs336_basics.utils.save_model import save_checkpoint
 from cs336_basics.losses.cross_entropy_loss import cross_entropy_loss
 
 class Trainer:
@@ -11,12 +11,12 @@ class Trainer:
         self.optimizer = optimizer
         self.device = device
     
-    def train(self, dataset: np.ndarray, batch_size: int, context_length: int, num_epochs: int) -> list[float]:
+    def train(self, dataset: np.ndarray, batch_size: int, context_len: int, num_epochs: int) -> list[float]:
         train_losses = []
         self.model.train()
         iteration = 0
         for _ in range(num_epochs):
-            batch_generator = get_shuffled_batches(dataset, batch_size, context_length, self.device)
+            batch_generator = get_shuffled_batches(dataset, batch_size, context_len, self.device)
             epoch_loss = 0.0
             
             for inputs, targets in batch_generator:
@@ -29,7 +29,8 @@ class Trainer:
             
             epoch_loss /= len(dataset) // batch_size
             train_losses.append(epoch_loss)
-        
+
+        self.save('final_checkpoint.pt', iteration)
         return train_losses
         
 
@@ -44,13 +45,13 @@ class Trainer:
 
         return loss.item()
     
-    def eval(self, dataset: np.ndarray, batch_size: int, context_length: int) -> float:
+    def eval(self, dataset: np.ndarray, batch_size: int, context_len: int) -> float:
         self.model.eval()
         total_loss = 0.0
         num_batches = 0
         
         with torch.no_grad():
-            batch_generator = get_shuffled_batches(dataset, batch_size, context_length, self.device)
+            batch_generator = get_shuffled_batches(dataset, batch_size, context_len, self.device)
             for inputs, targets in batch_generator:
                 inputs, targets = inputs.to(self.device), targets.to(self.device)
                 outputs = self.model(inputs)
