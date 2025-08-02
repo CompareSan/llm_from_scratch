@@ -10,7 +10,7 @@ def gradient_clipping(parameters: Iterable[torch.nn.Parameter], max_norm: float,
         max_norm (float): Maximum allowed L2 norm of the gradients.
         eps (float): Small constant to prevent division by zero.
     """
-    grads = [p.grad.detach() for p in parameters if p.grad is not None]
+    grads = [p.grad.detach().flatten() for p in parameters if p.grad is not None]
     if not grads:
         return
 

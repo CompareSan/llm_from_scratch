@@ -5,16 +5,23 @@ from cs336_basics.utils.data_loading import get_shuffled_batches
 from cs336_basics.utils.save_model import save_checkpoint
 from cs336_basics.losses.cross_entropy_loss import cross_entropy_loss
 import tqdm
+from cs336_basics.optimizers.lr_scheduler import cosine_annealing_scheduler
+from cs336_basics.optimizers.gradient_clipping import gradient_clipping
 
 class Trainer:
-    def __init__(self, model: nn.Module, optimizer: torch.optim.Optimizer, device: str = 'cpu', iteration: int = 0):
-        
+    def __init__(self, model: nn.Module, optimizer: torch.optim.Optimizer, device: str = 'cpu', iteration: int = 0, max_grad_norm: float = 1.0,
+                 ) -> None:
+    
+
         self.model = model.to(device)
         self.optimizer = optimizer
         self.device = device
         self.iteration = iteration
+        self.max_grad_norm = max_grad_norm
     
-    def train(self, dataset: np.ndarray, batch_size: int, context_len: int, n_steps: int) -> list[float]:
+    def train(self, dataset: np.ndarray, batch_size: int, context_len: int, n_steps: int,
+              lr_max: float, lr_min: float, t_warmup: int, t_post: int
+              ) -> list[float]:
         all_losses = []
         self.model.train()
         
@@ -23,6 +30,10 @@ class Trainer:
         batch_generator = get_shuffled_batches(dataset, batch_size, context_len, self.device)
 
         for _ in pbar:
+            new_lr = cosine_annealing_scheduler(self.iteration, lr_max, lr_min, t_warmup, t_post)
+            for param_group in self.optimizer.param_groups:
+                param_group['lr'] = new_lr
+
             try:
                 inputs, targets = next(batch_generator)
             except StopIteration:
@@ -49,6 +60,7 @@ class Trainer:
         outputs = self.model(inputs)
         loss = cross_entropy_loss(outputs, targets)
         loss.backward()
+        gradient_clipping(self.model.parameters(), self.max_grad_norm)
         self.optimizer.step()
 
         return loss.item()

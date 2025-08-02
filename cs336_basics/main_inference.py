@@ -6,7 +6,7 @@ import torch
 
 
 def main():
-    vocab_size = 10000
+    vocab_size = 10_000
     context_len = 128
     num_layers = 4
     d_model = 512
@@ -16,9 +16,10 @@ def main():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     model = Transformer(vocab_size, context_len, num_layers, d_model, num_heads, d_ff, theta)
-    checkpoint = torch.load('./checkpoints/checkpoint_4000.pt', map_location=device)
-    model.load_state_dict(checkpoint['model_state_dict'])
     model.to(device)
+    model = torch.compile(model)
+    checkpoint = torch.load('./checkpoints/checkpoint_1000.pt', map_location=device)
+    model.load_state_dict(checkpoint['model_state_dict'])
     model.eval()
 
     tokenizer = BPETokenizer.from_files("./tokenizers/vocab.json", "./tokenizers/merges.txt", special_token=["<|endoftext|>"])
