@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from cs336_basics.optimizers.adam import AdamW
 from cs336_basics.layers.transformer_llm import Transformer
-from cs336_basics.train import Trainer
+from cs336_basics.trainer import Trainer
 import numpy as np
 
 

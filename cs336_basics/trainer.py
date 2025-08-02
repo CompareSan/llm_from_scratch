@@ -26,7 +26,7 @@ class Trainer:
                 iteration += 1
                 pbar.set_postfix(loss=loss)
 
-                if iteration % 100 == 0:
+                if iteration % 1000 == 0:
                     self.save(f'./checkpoints/checkpoint_{iteration}.pt', iteration)
 
             epoch_loss /= len(dataset) // batch_size
